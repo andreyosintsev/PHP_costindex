@@ -1,6 +1,6 @@
 <?php session_start();?>
 <?php require 'header.php';?>
-<?php add_goods($_POST['goods'], $_POST['cost'], $_POST['units']);?>
+<?php if (false) { add_goods($_POST['goods'], $_POST['cost'], $_POST['units']); }?>
 <?php $group=$_GET['group'];?>
 <?php $filter=$_GET['filter'];?>
 <?php $sortby=$_GET['sortby'];?>

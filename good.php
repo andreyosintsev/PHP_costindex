@@ -2,9 +2,9 @@
 <?php require 'functions.php';?>
 <?php $idx=$_GET['idx'];?>
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 	<head>
-		<title>Цена <?php echo get_good($idx, false);?> | Индекс потребительских цен</title>
+		<title>Цена <?php echo get_good($idx, false);?> | Индекс потребительских цен - cosntindex.ru</title>
 		<meta charset="utf-8" />
 		<meta name="description" content="Сервис отслеживания изменения уровня цен на потребительские товары повседневного спроса">
 		<meta name='yandex-verification' content='67d5fc09920841b8' />
@@ -15,7 +15,7 @@
 	
 		<script type="text/javascript" src="//vk.com/js/api/openapi.js?115"></script>
 		<script type="text/javascript">
-			VK.init({apiId: 4548704, onlyWidgets: true});
+			VK.init({apiId: 51905512, onlyWidgets: true});
 		</script>
 		
 		<script type="text/javascript" src="https://www.google.com/jsapi"></script>
@@ -101,7 +101,7 @@
 			<section>
 				<div class="thumb">
 					<div class="thumb_img">
-						<?php if (get_thumb($idx)!='nophoto.jpg') echo '<img src="/thumbs/'.get_thumb($idx).'" alt="'.get_good($idx).'" title="'.get_good($idx).'">'; else {
+						<?php if (get_thumb($idx)!='nophoto.jpg') echo '<img src="/thumbs/'.get_thumb($idx).'" alt="'.get_good($idx).'" title="'.get_good($idx).'" width="200" height="200">'; else {
 							if (!empty($_SESSION['login']) and !empty($_SESSION['id'])) echo '<a href="#" title="Добавить изображение"><img src="/thumbs/addphoto.jpg"></a>'; else echo '<img src="/thumbs/nophoto.jpg" title="Изображение пока отсутствует">';}?>
 					</div>
 				

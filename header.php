@@ -1,9 +1,9 @@
 <?php require 'functions.php';?>
 <?php runtime(); ?>
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 	<head>
-		<title>Индекс потребительских цен</title>
+		<title>Индекс потребительских цен - costindex.ru</title>
 		<meta charset="utf-8">
 		<meta name="description" content="Сервис отслеживания изменения уровня цен на потребительские товары повседневного спроса">
 		<link rel="stylesheet" href="http://costindex.ru/style.css">

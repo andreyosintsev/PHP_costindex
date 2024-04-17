@@ -1,0 +1,85 @@
+$host="localhost";
+$user="pumpmeu7_costidx";
+$password="cstid123";
+$db="pumpmeu7_costindex";
+
+mysql_query("SET NAMES 'utf8'"); 
+mysql_query("SET CHARACTER SET 'utf8'");
+mysql_query("SET SESSION collation_connection = 'utf8_general_ci'");
+
+
+1) Таблица GROUPS
+
+| idx  |  name |
+
+$sql=mysql_query("SELECT idx, name FROM groups ORDER BY name ASC");
+$sql=mysql_query("SELECT name FROM groups WHERE idx='$idx'");
+$sql=mysql_query("SELECT idx, name FROM groups ORDER BY name ASC");
+
+
+2) Таблица GOODS
+
+|  idx  |  name  |  grp  |  value  | units  |  thumb  |  producer  |  importer  |  ingredients  |  proteins  |  fats  |  carbohydrates  |  energy  |  expdate  | lastedit (text)
+
+$sql=mysql_query("SELECT COUNT(*), SUM(value) FROM goods");
+$sql=mysql_query("SELECT COUNT(*) FROM goods WHERE grp='$group'");
+$sql=mysql_query("SELECT idx, name, units FROM goods ORDER BY name ASC");
+$mysql_query_str="SELECT idx, name, value, thumb, units FROM goods WHERE name LIKE '$filter%' AND grp='$group' ORDER BY ".$sortby." ".$sortdir; else
+$mysql_query_str="SELECT idx, name, value, thumb, units FROM goods WHERE name LIKE '$filter%' ORDER BY ".$sortby." ".$sortdir;
+$sql=mysql_query("SELECT thumb FROM goods WHERE idx='$idx'");
+$sql=mysql_query("SELECT value FROM goods WHERE idx='$idx'");
+$sql=mysql_query("SELECT producer, importer, ingredients, proteins, fats, carbohydrates, energy, expdate FROM goods WHERE idx='$idx'");
+$sql=mysql_query("SELECT grp FROM goods WHERE idx='$idx'");
+mysql_query("SELECT name, thumb FROM goods WHERE grp='$idx' AND thumb<>''");
+$sql_goods=mysql_query("UPDATE goods SET value='$value' WHERE idx='$idx'");
+$sql=mysql_query("SELECT COUNT(*), value FROM goods");
+$sql=mysql_query("INSERT INTO goods (name, grp, value, units, lastedit) VALUES ('$goods', '$groups', '$cost', '$units', '$user_login')");
+$sql=mysql_query("SELECT idx FROM goods WHERE name LIKE '$string[0]%' ORDER BY RAND()");
+$sql=mysql_query("SELECT idx FROM goods WHERE grp='$group'");
+
+
+3) Таблица INDEXVALUE
+
+|  indexvalue  |  time_added (time)  |
+
+$sql=mysql_query("INSERT INTO indexvalue (indexvalue) VALUES ('$indexvalue')");
+$sql=mysql_query("SELECT indexvalue FROM indexvalue ORDER BY time_added DESC LIMIT 0,1");
+$sql=mysql_query("SELECT indexvalue FROM indexvalue ORDER BY time_added DESC LIMIT 0,2");
+$sql=mysql_query("SELECT time_added, indexvalue FROM indexvalue WHERE time_added>'$last30d' ORDER BY time_added DESC");
+$sql=mysql_query("SELECT indexvalue FROM indexvalue ORDER BY time_added DESC LIMIT 0,1");
+$sql=mysql_query("INSERT INTO indexvalue (indexvalue) VALUES ('".$value."')");
+$sql=mysql_query("SELECT time_added, indexvalue FROM indexvalue WHERE time_added>'$lastdays' ORDER BY time_added ASC");
+
+
+4) Таблица UNITS
+
+|  idx  |  value  |
+
+$sql_unit = mysql_query("SELECT value FROM units WHERE idx='$unit'");
+
+
+5) Таблица COSTS
+
+|  idx  |  goods  |  cost  |  date (timestamp)  |
+
+$sql_cost = mysql_query("SELECT cost, date FROM costs WHERE goods='$good' ORDER BY date DESC");
+$sql=mysql_query("SELECT date, cost FROM costs WHERE goods='$idx' ORDER BY date ASC");
+$sql_goods=mysql_query("SELECT goods, cost FROM costs WHERE date>'$fromdate'");
+$sql=mysql_query("DELETE FROM costs WHERE goods='$goods' AND date>'$fromdate'");
+$sql=mysql_query("INSERT INTO costs (goods, cost) VALUES ('$goods', '$cost')");	
+$sql_costs=mysql_query("SELECT goods, cost FROM costs WHERE date>'$fromdate'");
+$sql2=mysql_query("SELECT COUNT(goods) FROM costs WHERE goods='$idx'");
+$sql=mysql_query("SELECT cost FROM costs WHERE goods='$idx'");
+$sql=mysql_query("SELECT cost FROM costs WHERE goods='$idx'");
+$sql=mysql_query("SELECT date, cost FROM costs WHERE goods='$idx' ORDER BY date ASC");
+
+
+6) Таблица USERS
+
+|  idx  |  login  |  pass  |  name  |  email  |  confirmed  |  role  |
+
+$sql = mysql_query("SELECT * FROM users WHERE login='$login'");
+$sql = mysql_query("SELECT login FROM users WHERE login='$nick'");
+$sql=mysql_query("INSERT INTO users (login, pass, name, email, confirmed, role) VALUES ('$nick', '$password', '$name', '$reg_email', false, 'supplier')");	
+$sql = mysql_query("SELECT pass FROM users WHERE login='$login'");
+$sql=mysql_query("UPDATE users SET confirmed=true WHERE login='$login'");

@@ -1,8 +1,8 @@
 <?php
 	$host="localhost";
-	$user="pumpmeu7_costidx";
-	$password="cstid123";
-	$db="pumpmeu7_costindex";
+	$user="u0650462_costuse";
+	$password="dG4rV8xG6xxI7jR3";
+	$db = "u0650462_costindex";
 	
 	$connected = mysql_connect($host, $user, $password);
 	if (!$connected) die ("MySQL сервер недоступен!".mysql_error());

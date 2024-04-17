@@ -1,25 +1,28 @@
-﻿<?php session_start();?>
-<?php require 'functions.php';?>
-<?php runtime(); ?>
-<?php login($_POST['login'], $_POST['pass']);?>
+<?php 
+	session_start();
+	require 'functions.php';
+	runtime();
+
+	$login = $_POST['login'];
+	$pass = $_POST['pass'];
+
+	login($login, $pass);
+?>
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 	<head>
-		<title>Индекс потребительских цен</title>
+		<title>Индекс потребительских цен - costindex.ru</title>
 		<meta charset="utf-8" />
 		<meta name="description" content="Сервис отслеживания изменения уровня цен на потребительские товары повседневного спроса">
-		<meta name='yandex-verification' content='67d5fc09920841b8' />
+		<meta name="yandex-verification" content="80ae12768b55d72e" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
 		<link rel="stylesheet" href="http://costindex.ru/style.css">
-		<!--[if IE]>
-		<script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
-		<![endif]-->
-	
-		<script type="text/javascript" src="//vk.com/js/api/openapi.js?115"></script>
+
+		<script src="https://vk.com/js/api/openapi.js?169" type="text/javascript"></script>
 		<script type="text/javascript">
-			VK.init({apiId: 4548704, onlyWidgets: true});
+			VK.init({apiId: 51905512, onlyWidgets: true});
 		</script>
-		
+
 		<script type="text/javascript" src="https://www.google.com/jsapi"></script>
 		<script type="text/javascript">
  
@@ -80,17 +83,8 @@
 
 <!--index.php-->
 	<body>
-		<div class="banner_top">
-			<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
-			<!-- costindex.ru - хедер 728х90 -->
-			<ins class="adsbygoogle"
-				style="display:inline-block;width:728px;height:90px"
-				data-ad-client="ca-pub-4019665621332188"
-				data-ad-slot="2557863983"></ins>
-			<script>
-				(adsbygoogle = window.adsbygoogle || []).push({});
-			</script>	
-		</div>
+
+		<?php include('ads-top.php'); ?>
 		
 		<?php if (!empty($_SESSION['login']) and !empty($_SESSION['id'])) 
 			require ('logged.php'); else require ('login.php');
@@ -134,7 +128,9 @@
 				<section>
 				<p>Из средств массовой информации каждый день поступают сведения, что цены постоянно растут. Этот ресурс создан для того, чтобы на конкретных значениях цен определить, как изменяются цены на потребительские товары день за днем.</p>
 				
-				<p>Индекс представляет собой среднее арифметическое цен на товары, представленные в рейтинге. Пересчет индекса осуществляется каждый день. Обновление цен производится по мере возможности.
+				<p><strong>Индекс - среднее арифметическое цен на товары, представленные в рейтинге.</strong></p>
+				
+				<p>Пересчет индекса осуществляется каждый день. Обновление цен производится по мере возможности.
 				К учету взяты цены на товары популярной торговой сети магазинов с товарами на каждый день на основе реальных кассовых чеков.</p>
 				</section>
 			</article>

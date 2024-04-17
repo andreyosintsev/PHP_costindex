@@ -17,9 +17,9 @@ function do_newestvalue() {
 }
 
 function do_changevalue() {
-	$con=db_connect();
+	$con = db_connect();
 	
-	$result='Не сработало';
+	$result = 'Не сработало';
 	
 	$sql=mysql_query("SELECT indexvalue FROM indexvalue ORDER BY time_added DESC LIMIT 0,2");
 	$result=mysql_fetch_array($sql);
@@ -28,6 +28,9 @@ function do_changevalue() {
 	$prevvalue=$result['indexvalue'];
 
 	$diff=round($newestvalue-$prevvalue,4);
+	if ($prevvalue == 0) {
+		$prevvalue = 1;
+	}
 	$diffproc=round(($newestvalue-$prevvalue)/$prevvalue*100,2);
 	
 	if ($diff>0) echo '<sup style="color: #f00" title="Последнее изменение">+'.$diff.' (+'.$diffproc.'%)</sup>';
@@ -66,9 +69,9 @@ function db_insertindex($value) {
 
 function db_connect() {
 	$host="localhost";
-	$user="pumpmeu7_costidx";
-	$password="cstid123";
-	$db="pumpmeu7_costindex";
+	$user="u0650462_costuse";
+	$password="dG4rV8xG6xxI7jR3";
+	$db = "u0650462_costindex";
 	
 	$connected = mysql_connect($host, $user, $password);
 	if (!$connected) {
@@ -77,9 +80,9 @@ function db_connect() {
 	};
 	
 	mysql_select_db($db) or die("Нет соединения с БД".mysql_error());
-	mysql_query("SET NAMES 'utf8'"); 
-	mysql_query("SET CHARACTER SET 'utf8'");
-	mysql_query("SET SESSION collation_connection = 'utf8_general_ci'");
+	mysql_query("SET NAMES 'utf8mb4'"); 
+	mysql_query("SET CHARACTER SET 'utf8mb4'");
+	mysql_query("SET SESSION collation_connection = 'utf8mb4_unicode_ci'");
 	
 	return $connected;
 }
@@ -136,7 +139,7 @@ function do_graph() {
 	echo sizeof($days);
 }
 
-function get_numgoods($group) {
+function get_numgoods($group = '') {
 	$con=db_connect();
 	
 	if (!empty($group)) 
@@ -152,7 +155,7 @@ function get_numgoods($group) {
 	db_disconnect($con);
 }
 
-function get_tablegoods($filter='', $sortby='name', $sortdir='ASC', $group) {
+function get_tablegoods($group, $filter='', $sortby='name', $sortdir='ASC') {
 		
 	if (empty($sortby)) $sortby='name';
 	if (empty($sortdir)) $sortdir='ASC';
@@ -199,6 +202,10 @@ function get_tablegoods($filter='', $sortby='name', $sortdir='ASC', $group) {
 			$prev_cost = $row_cost['cost'];
 			$last_date = $row_cost['date'];
 			
+			if ($prev_cost == 0) {
+				$prev_cost = 1;
+			}
+
 			$diffcost = round(($now_cost-$prev_cost)/$prev_cost*100,2);
 			if (!($diffcost==0)) $lastdatestr=date ('d.m.Y', strtotime($last_date)); else $lastdatestr="";
 			
@@ -638,21 +645,21 @@ function login($login, $pass) {
     $pass = htmlspecialchars($pass);
     $pass = trim($pass);
 	
-	if ($login=='logout') {
+	if ($login == 'logout') {
 		unset ($_SESSION['login']);
 		unset ($_SESSION['id']);
 		unset ($_SESSION['role']);
 		
-		return 0;
+		exit;
 	}
 	
-	$con=db_connect();
+	$con = db_connect();
 			
 		$sql = mysql_query("SELECT * FROM users WHERE login='$login'");
 		$row = mysql_fetch_array($sql);
 		
-		if (!(empty($row['pass'])) and $row['confirmed']) {
-			if ($row['pass']==md5($pass)) {
+		if (!(empty($row['pass'])) && $row['confirmed']) {
+			if ($row['pass'] == md5($pass)) {
 				$_SESSION['login']=$row['login']; 
 				$_SESSION['id']=$row['idx'];
 				$_SESSION['role']=$row['role'];
@@ -895,4 +902,3 @@ $translit = array(
   );
 	return strtr($rus_str, $translit);
 }
-?>
