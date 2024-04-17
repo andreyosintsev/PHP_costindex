@@ -1,0 +1,4 @@
+User-agent: Yandex
+Disallow:
+Host: costindex.ru
+Clean-param: delete http://costindex.ru/addvalue.php

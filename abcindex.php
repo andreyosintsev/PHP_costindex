@@ -1,0 +1,10 @@
+<div style="text-align: center;">
+	<table class="goods">
+		<tr style="background: #eee">
+			<td>
+				<a href="http://costindex.ru/goods.php">ВСЕ (<?php echo get_numgoods();?>)</a> | <a href="http://costindex.ru/goods.php/?filter=А">A</a> <a href="http://costindex.ru/goods.php/?filter=Б">Б</a> <a href="http://costindex.ru/goods.php/?filter=В">В</a> <a href="http://costindex.ru/goods.php/?filter=Г">Г</a> <a href="http://costindex.ru/goods.php/?filter=Д">Д</a> <a href="http://costindex.ru/goods.php/?filter=Е">Е</a> <a href="http://costindex.ru/goods.php/?filter=Ё">Ё</a> <a href="http://costindex.ru/goods.php/?filter=Ж">Ж</a> <a href="http://costindex.ru/goods.php/?filter=З">З</a> <a href="http://costindex.ru/goods.php/?filter=И">И</a> <a href="http://costindex.ru/goods.php/?filter=Й">Й</a> <a href="http://costindex.ru/goods.php/?filter=К">К</a> <a href="http://costindex.ru/goods.php/?filter=Л">Л</a> <a href="http://costindex.ru/goods.php/?filter=М">М</a> <a href="http://costindex.ru/goods.php/?filter=Н">Н</a> <a href="http://costindex.ru/goods.php/?filter=О">О</a> <a href="http://costindex.ru/goods.php/?filter=П">П</a> <a href="http://costindex.ru/goods.php/?filter=Р">Р</a> <a href="http://costindex.ru/goods.php/?filter=С">С</a> <a href="http://costindex.ru/goods.php/?filter=Т">Т</a> <a href="http://costindex.ru/goods.php/?filter=У">У</a> <a href="http://costindex.ru/goods.php/?filter=Ф">Ф</a> <a href="http://costindex.ru/goods.php/?filter=Х">Х</a> <a href="http://costindex.ru/goods.php/?filter=Ц">Ц</a> <a href="http://costindex.ru/goods.php/?filter=Ч">Ч</a> <a href="http://costindex.ru/goods.php/?filter=Ш">Ш</a> <a href="http://costindex.ru/goods.php/?filter=Щ">Щ</a> <a href="http://costindex.ru/goods.php/?filter=Э">Э</a> <a href="http://costindex.ru/goods.php/?filter=Ю">Ю</a> <a href="http://costindex.ru/goods.php/?filter=Я">Я</a>
+			</td>
+		</tr>
+	</table>
+</div>
+<div style="clear:both"></div>
