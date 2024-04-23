@@ -1,46 +1,46 @@
-<?php session_start();?>
-<?php require 'header.php';?>
-<?php if (false) { add_goods($_POST['goods'], $_POST['cost'], $_POST['units']); }?>
-<?php $group=$_GET['group'];?>
-<?php $filter=$_GET['filter'];?>
-<?php $sortby=$_GET['sortby'];?>
-<?php $sortdir=$_GET['sortdir'];?>
-<!--goods.php-->
+<?php
+    session_start();
+    require 'functions.php';
+
+    $group   = $_GET['group'];
+    $filter  = $_GET['filter'];
+    $sortby  = $_GET['sortby'];
+    $sortdir = $_GET['sortdir'];
+?>
+
+<?php require 'template/header.php'; ?>
+
 	<body>
-		<div class="banner_top">
-			<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
-			<!-- costindex.ru - хедер 728х90 -->
-			<ins class="adsbygoogle"
-				style="display:inline-block;width:728px;height:90px"
-				data-ad-client="ca-pub-4019665621332188"
-				data-ad-slot="2557863983"></ins>
-			<script>
-				(adsbygoogle = window.adsbygoogle || []).push({});
-			</script>	
-		</div>
+		<?php include('template/ads-top.php'); ?>
 		
-		<?php if (!empty($_SESSION['login']) and !empty($_SESSION['id'])) 
-			require ('logged.php'); else require ('login.php');
+		<?php 
+			if (!empty($_SESSION['login']) && !empty($_SESSION['id'])) 
+			require ('template/logged.php'); else require ('template/login.php');
 		?>
 		
 		<div class="wrapper">
-			<?php require 'abcindex.php'; ?>
+			<?php require 'template/abccontents.php'; ?>
 			
 			<header>
 				<h1>Таблица товаров на</h1>
-				<h2><time style="margin-top:5px" datetime="<?php db_newestdate('Y-m-d');?>"><?php db_newestdate('d.m.Y');?></time></h2>
+				<h2><time datetime="<?php get_date_newest('Y-m-d');?>"><?php get_date_newest('d.m.Y');?></time></h2>
 			</header>
  
-			<?php get_group_index(); ?>
+			<?php get_group_contents(); ?>
  
-			<?php if (isset($filter)) echo '<h2 style="margin: 10px 0 0 10px">'.$filter.'</h2>'; else echo '<h2 style="margin: 10px 0 0 10px">'.get_group_name($group).'</h2>';?>
+			<?php
+				if (isset($filter))
+					echo '<h2 style="margin: 10px 0 0 10px">'. $filter .'</h2>'; 
+				else 
+					echo '<h2 style="margin: 10px 0 0 10px">'. get_group_name($group) .'</h2>';
+			?>
 			
 			<?php get_popular($group); ?>
 					
 			<article>
 				<div class="goods">
-					<?php get_tablegoods($_GET['filter'], $sortby, $sortdir, $group) ?>
+					<?php get_goods_table($group, $filter, $sortby, $sortdir) ?>
 				</div>
 			</article>
 
-<?php require ('footer.php')?>
+<?php require 'template/footer.php'; ?>

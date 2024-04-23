@@ -78,8 +78,16 @@ ins {
 	text-decoration: none;
 }
 
-article, aside, details, figcaption, figure, footer, header, hgroup, menu, nav, section {
+article, aside, details, figcaption, figure, footer, header, hgroup, menu, section {
 	display: block;
+}
+
+nav {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+
+	padding: 5px 0;
 }
 
 a {
@@ -95,7 +103,7 @@ a:hover {
 
 header p{
 	font-size: 80px;
-	margin: 0 0 -40px 0;
+	margin: 0 0 -10px 0;
 	min-height: 30px;
 }
 
@@ -167,6 +175,11 @@ footer p{
 	padding: 5px 0;
 }
 
+#chart_div {
+	display: block;
+	width: 100%;
+}
+
 .graph {
 	text-align: center;
 	margin-top: 30px;
@@ -219,7 +232,7 @@ input {
 table.goods {
 	max-width: 706px;
 	border: 1px solid #eee;
-	margin: 10px 0 10px 0;
+	margin: 10px auto;
 	padding-left: 3px;
 	border-width: 1px 1px 2px;
 	border-spacing: 0;
@@ -307,9 +320,7 @@ sup {
 }
 
 .stats {
-	width: 186px;
-	float: right;
-	margin: 5px -5px 0 5px;
+	margin: 0;
 }
 
 h2 {
@@ -377,4 +388,8 @@ h3 {
 .form_label {
 	float: left;
 	margin: 10px 10px 5px 0;
+}
+
+.abc-contents__letter {
+	margin-right: 5px;
 }

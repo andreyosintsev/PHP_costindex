@@ -8,137 +8,86 @@
 
 	login($login, $pass);
 ?>
-<!DOCTYPE html>
-<html lang="ru">
-	<head>
-		<title>Индекс потребительских цен - costindex.ru</title>
-		<meta charset="utf-8" />
-		<meta name="description" content="Сервис отслеживания изменения уровня цен на потребительские товары повседневного спроса">
-		<meta name="yandex-verification" content="80ae12768b55d72e" />
-		<meta name="viewport" content="width=device-width, initial-scale=1.0">
-		<link rel="stylesheet" href="http://costindex.ru/style.css">
 
-		<script src="https://vk.com/js/api/openapi.js?169" type="text/javascript"></script>
-		<script type="text/javascript">
-			VK.init({apiId: 51905512, onlyWidgets: true});
-		</script>
+	<?php require 'template/header.php'; ?>
 
-		<script type="text/javascript" src="https://www.google.com/jsapi"></script>
-		<script type="text/javascript">
- 
-		// Load the Visualization API library and the piechart library.
+	<script src="https://www.google.com/jsapi"></script>
+	<script src="scripts/chart.js"></script>
+	<script>
 		google.load('visualization', '1.0', {'packages':['corechart']});
-		google.setOnLoadCallback(drawChart);
-		// ... draw the chart...
- 
-		function drawChart() {
- 
-			//Create the data table.
-					
-			var data = new google.visualization.DataTable();
-			data.addColumn('date', 'Дата');
-			data.addColumn('number', 'Индекс');
-			data.addRows([
-					<?php
-					$iter_in=0;
-					$iter_out=0;
-					$con=db_connect();
-					$lastdays=date("c",strtotime("-24 weeks"));
-					if ($_GET['lastdays']=='year') $lastdays=date("c",strtotime("-1 year"));
-					if ($_GET['lastdays']=='6months') $lastdays=date("c",strtotime("-24 weeks"));
-					if ($_GET['lastdays']=='month') $lastdays=date("c",strtotime("-4 weeks"));
-					if ($_GET['lastdays']=='2years') $lastdays=date("c",strtotime("-2 year"));
-					if ($_GET['lastdays']=='3months') $lastdays=date("c",strtotime("-12 weeks"));
-					
-					$sql=mysql_query("SELECT time_added, indexvalue FROM indexvalue WHERE time_added>'$lastdays' ORDER BY time_added ASC");
-					while($row=mysql_fetch_array($sql)) {
-						$key=date("Y-n-d",strtotime($row['time_added']));
-						$days[$key]=$row['indexvalue'];
-						$iter_in=$iter_in+1;
-					}
-					db_disconnect($con);
-					foreach($days as $day=>$count) {
-						$date=strtotime($day)*1000;
-						echo "[new Date($date), $count]";
-						$iter_out=$iter_out+1;
-						if ($iter_out<$iter_in) echo ",\n"; else echo "\n";
-					}?>
-				]);
-			        
-			var options = {'title':'',
-				'height':200,
-				'legend':{'position':'none'},
-				'titleTextStyle':{'fontName':'Georgia','fontSize':20,'bold':false},
-				hAxis: {title: 'Дата'},
-				vAxis: {title: 'Индекс, р.', textPosition: 'in'},
-				chartArea: {width: '100%'},
-			};
- 
-			// Instantiate and draw our chart, passing in some options.
-			var chart = new google.visualization.AreaChart(document.getElementById('chart_div'));
-			chart.draw(data, options);
-		}
-		</script>
-	</head>
-
-<!--index.php-->
+		google.setOnLoadCallback(() => drawChart(
+			[		
+				<?php graph_index_fill($_GET['lastdays']); ?>
+			], 
+			'chart_div',
+            'Индекс')
+		);
+	</script>
 	<body>
 
-		<?php include('ads-top.php'); ?>
+	<?php include('template/ads-top.php'); ?>
 		
-		<?php if (!empty($_SESSION['login']) and !empty($_SESSION['id'])) 
-			require ('logged.php'); else require ('login.php');
-		?>
+	<?php if (!empty($_SESSION['login']) and !empty($_SESSION['id'])) 
+		require ('template/logged.php'); else require ('template/login.php');
+	?>
 		
-		<div class="wrapper">
+	<div class="wrapper">
+		<header>
+			<h1>Индекс цен на <?php get_date_newest('d.m.Y');?></h1>
+			<p><?php get_index_newest();?></p>
+			<p><?php get_index_change();?></p>
+			<time datetime="<?php get_date_newest('Y-m-d');?>"></time>
+		</header>
+
+		<article>
 			<header>
-				<h1>Индекс цен на <?php db_newestdate('d.m.Y');?></h1>
-				<p><?php do_newestvalue();?></p>
-				<p><?php do_changevalue();?></p>
-				<time datetime="<?php db_newestdate('Y-m-d');?>"></time>
+
+				<?php
+					$time_interval = convert_date_interval_to_string($_GET['lastdays']);
+
+					function get_style($time_interval, $interval) {
+						if ($time_interval == $interval) echo 'style="font-weight: bold"';
+					}
+				?>
+
+				<h2>
+					График изменения индекса потребительских цен за	<?php echo $time_interval; ?>
+				</h2>
 			</header>
- 
-			<article>
-				<header>
-					<h2>
-						График изменения индекса потребительских цен
-						<?php if ($_GET['lastdays']=='year') echo 'за год'; else
-							if ($_GET['lastdays']=='6months') echo 'за полгода'; else
-							if ($_GET['lastdays']=='month') echo 'за месяц'; else 
-							if ($_GET['lastdays']=='2years') echo 'за два года'; else 
-							if ($_GET['lastdays']=='3months') echo 'за квартал'; else 
-							echo 'за полгода';							
-						?>
-					</h2>
-				</header>
-				<section>
-					<div class="graph">
-						<div id="chart_div" title="График изменения индекса за месяц" style="width: 100%; height: 200px;"></div>
-						<table width="100%" style="border:0">
-						<tr>
-							<td width="20%"><a href="/?lastdays=month"<?php if ($_GET['lastdays']=='month') echo ' style="font-weight: bold"'?>>месяц</a></td>
-							<td width="20%"><a href="/?lastdays=3months"<?php if ($_GET['lastdays']=='3months') echo ' style="font-weight: bold"'?>>квартал</a></td>
-							<td width="20%"><a href="/?lastdays=6months"<?php if (($_GET['lastdays']=='6months')  or ($_GET['lastdays']=='')) echo ' style="font-weight: bold"'?>>полгода</a></td>
-							<td width="20%"><a href="/?lastdays=year"<?php if ($_GET['lastdays']=='year') echo ' style="font-weight: bold"'?>>год</a></td>
-							<td width="20%"><a href="/?lastdays=2years"<?php if ($_GET['lastdays']=='2years') echo ' style="font-weight: bold"'?>>два года</a></td>
+			<section>
+				<div class="graph">
+					<div id="chart_div" title="График изменения индекса за <?php echo $time_interval; ?>"></div>
+					<table width="100%" style="border:0">
+					<tr>
+						<td width="20%">
+							<a href="/?lastdays=month"   <?php get_style($time_interval, 'month'); ?> >месяц</a>
 						</td>
-						</table>
-					</div>
-				</section>
-				<section>
+						<td width="20%">
+							<a href="/?lastdays=3months" <?php get_style($time_interval, '3months'); ?> >квартал</a>
+						</td>
+						<td width="20%">
+							<a href="/?lastdays=6months" <?php get_style($time_interval, '6months'); ?> >полгода</a>
+						</td>
+						<td width="20%">
+							<a href="/?lastdays=year"    <?php get_style($time_interval, 'year'); ?> >год</a>
+						</td>
+						<td width="20%">
+							<a href="/?lastdays=2years"  <?php get_style($time_interval, '2years'); ?> >два года</a>
+						</td>
+					</tr>
+					</table>
+				</div>
+			</section>
+			<section>
 				<p>Из средств массовой информации каждый день поступают сведения, что цены постоянно растут. Этот ресурс создан для того, чтобы на конкретных значениях цен определить, как изменяются цены на потребительские товары день за днем.</p>
 				
 				<p><strong>Индекс - среднее арифметическое цен на товары, представленные в рейтинге.</strong></p>
 				
 				<p>Пересчет индекса осуществляется каждый день. Обновление цен производится по мере возможности.
 				К учету взяты цены на товары популярной торговой сети магазинов с товарами на каждый день на основе реальных кассовых чеков.</p>
-				</section>
-			</article>
-			
-			<div id="vk_comments"></div>
-			<script type="text/javascript">
-				VK.Widgets.Comments("vk_comments", {limit: 10, attach: "*"});
-			</script>
+			</section>
+		</article>
+		
+		<?php include 'template/comments.php';?>
 
-
-<?php require ('footer.php');?>
+<?php require 'template/footer.php'; ?>

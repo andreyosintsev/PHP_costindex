@@ -1,85 +1,76 @@
 <?php
-function do_date($format, $echo=true) {
-	if ($echo) echo date($format); else return date($format);
-}
 
-function do_newestvalue() {
-	$con=db_connect();
-	
-	$result='Не сработало';
-	
-	$sql=mysql_query("SELECT indexvalue FROM indexvalue ORDER BY time_added DESC LIMIT 0,1");
-	$result=mysql_fetch_array($sql);
-	echo $result['indexvalue'];
-	
-	error_log ("Exiting from DO_NEWESTVALUE"); 
-	db_disconnect($con);
-}
+/*
+	Перечень всех функций:
 
-function do_changevalue() {
-	$con = db_connect();
-	
-	$result = 'Не сработало';
-	
-	$sql=mysql_query("SELECT indexvalue FROM indexvalue ORDER BY time_added DESC LIMIT 0,2");
-	$result=mysql_fetch_array($sql);
-	$newestvalue=$result['indexvalue'];
-	$result=mysql_fetch_array($sql);
-	$prevvalue=$result['indexvalue'];
+	db_connect()
+	db_disconnect($con)
+	db_insertindex($value)
+	login($login = '', $pass = '')
+	get_date_newest($format, $echo = true)
 
-	$diff=round($newestvalue-$prevvalue,4);
-	if ($prevvalue == 0) {
-		$prevvalue = 1;
-	}
-	$diffproc=round(($newestvalue-$prevvalue)/$prevvalue*100,2);
-	
-	if ($diff>0) echo '<sup style="color: #f00" title="Последнее изменение">+'.$diff.' (+'.$diffproc.'%)</sup>';
-		else echo '<sup style="color: #0d0" title="Последнее изменение">'.$diff.' ('.$diffproc.'%)</sup>';
-	
 
-	db_disconnect($con);
-}
+	- do_date($format, $echo=true)
 
-function db_newestdate($format, $echo=true) {
-	$con=db_connect();
-	
-	$result='Не сработало';
-	
-	$sql=mysql_query("SELECT time_added FROM indexvalue ORDER BY time_added DESC LIMIT 0,1");
-	$result=mysql_fetch_array($sql);	
-		
-	$formatted_time = date ($format, strtotime($result['time_added']));
-		
-	echo $formatted_time;
-	
-	error_log ("Exiting from DB_NEWESTDATE"); 
-	db_disconnect($con);
-}
+	convert_date_interval_to_string($time_interval = '6month')
+	graph_index_fill($time_interval)
+    graph_value_fill($idx)
+	get_index_newest() 
+	get_index_change()
+	runtime($time_start = 0, $is_get_runtime = false)
 
-function db_insertindex($value) {
-	$con=db_connect();
+	- do_graph()
+	get_goods_num($group = '')
+	get_goods_table($group, $filter='', $sortby='name', $sortdir='ASC')
+	- get_tablepricechange($idx)
+	- get_tablecosts($login)
+	- get_goods() 
+	get_good($idx, $units=true)
+	- get_units()
+    get_group()
+	- get_groups()
 	
-	$result='Не сработало';
+	get_thumb($idx)
+	get_price($idx)
+	get_price_max($idx)
+	get_price_min($idx)
+	- get_params($idx)
 	
-	$sql=mysql_query("INSERT INTO indexvalue (indexvalue) VALUES ('".$value."')");
-	
-	error_log ("Exiting from DB_INSERTINDEX"); 
-	db_disconnect($con);
-}
+	get_group_name($idx)
 
+	- get_group($idx)
+	get_group_contents()
+	- get_group_index_img()
+	- del_costs($goods)
+	- add_costs($goods, $cost)
+	- update_costs()
+	- add_indexvalue()
+	add_goods($groups, $goods, $cost, $units)
+	- get_related($idx)
+	get_popular($group)
+	- conv_kcal_to_kj ($kcal)
+
+	- is_logged($session)
+	- confirm_user($login, $number)
+	get_edit_link($session)
+	- rus_to_lat($rus_str)
+
+	*/
+
+require 'config.php';
+
+/*
+	ФУНКЦИИ РАБОТЫ С БАЗОЙ ДАННЫХ
+*/
+
+//refactored
 function db_connect() {
-	$host="localhost";
-	$user="u0650462_costuse";
-	$password="dG4rV8xG6xxI7jR3";
-	$db = "u0650462_costindex";
-	
-	$connected = mysql_connect($host, $user, $password);
+	$connected = mysql_connect(DB_HOST, DB_USER, DB_PASS);
 	if (!$connected) {
-		error_log("MySQL сервер недоступен! ".mysql_error());
-		die();
+		die("Ошибка: MySQL сервер недоступен! MYSQL_ERROR: ".mysql_error());
 	};
 	
-	mysql_select_db($db) or die("Нет соединения с БД".mysql_error());
+	mysql_select_db(DB_NAME) || die("Ошибка: не удалось установить соединение с БД. MYSQL_ERROR: ".mysql_error());
 	mysql_query("SET NAMES 'utf8mb4'"); 
 	mysql_query("SET CHARACTER SET 'utf8mb4'");
 	mysql_query("SET SESSION collation_connection = 'utf8mb4_unicode_ci'");
@@ -87,41 +78,224 @@ function db_connect() {
 	return $connected;
 }
 
+//refactored
 function db_disconnect($con) {
-	mysql_close($con);	
+	if (!isset($con)) return;
+
+	mysql_close($con) || die("Ошибка: не удалось разорвать соединение с БД. MYSQL_ERROR: ".mysql_error()); ;	
 }
 
-function runtime($type='0',$mark=NULL)
-{
-    global $_runtime_microsec;
+//refactored
+function login($login = '', $pass = '') {
+	if ($login == '') return;
+
+	$login = stripslashes($login);
+    $login = htmlspecialchars($login);
+	$login = trim($login);
+
+	$pass = stripslashes($pass);
+    $pass = htmlspecialchars($pass);
+    $pass = trim($pass);
+
+	if ($login == 'logout') {
+		echo 'login == logout';
+		unset($_SESSION['login']);
+		unset($_SESSION['id']);
+		unset($_SESSION['role']);
+		
+		return;
+	}
+
+	if ($pass == '') return;
+	
+	$con = db_connect();
+			
+		$sql = mysql_query("SELECT * FROM users WHERE login = '$login'");
+		$row = mysql_fetch_array($sql);
+		
+		if (!(empty($row['pass'])) && $row['confirmed']) {
+			if (md5($pass) == $row['pass']) {
+				$_SESSION['login'] = $row['login']; 
+				$_SESSION['id']    = $row['idx'];
+				$_SESSION['role']  = $row['role'];
+			};
+		};
+
+	db_disconnect($con);	
+}
+
+//refactored
+function get_date_newest($format, $echo = true) {
+	$con = db_connect();
+	
+	$sql = mysql_query("SELECT time_added FROM indexvalue ORDER BY time_added DESC LIMIT 0, 1");
+	$value = mysql_fetch_array($sql);	
+	db_disconnect($con);
+		
+	echo date($format, strtotime($value['time_added']));
+
+	error_log ("Exiting from DB_NEWESTDATE"); 	
+}
+
+//refactored
+function db_insertindex($value) {
+    if (!isset($value)) {
+        error_log("Exiting from DB_INSERTINDEX: no value provided");
+        return;
+    }
+
+	$con = db_connect();
+	
+	    $sql = mysql_query("INSERT INTO indexvalue (indexvalue) VALUES ('$value')");
+	
+	db_disconnect($con);
+
+    error_log ("Exiting from DB_INSERTINDEX");
+}
+
+
+/* 
+	ФУНКЦИИ РАБОТЫ С ДАТАМИ
+*/
+
+
+function do_date($format, $echo=true) {
+	if ($echo) echo date($format); else return date($format);
+}
+
+
+//refactored
+function convert_date_interval_to_string($time_interval = '6month' ) {
+	switch ($time_interval) {
+		case 'month': 	return 'месяц';		break;
+		case '3months': return 'квартал';	break;
+		case '6months':	return 'полгода';	break;
+		case 'year': 	return 'год';		break;
+		case '2years':	return 'два года';	break;							
+	}
+
+	return 'полгода';
+}
+
+
+/*
+	ФУНКЦИИ РАБОТЫ С ГРАФИКАМИ
+*/
+
+//refactored
+function graph_index_fill($time_interval) {
+	$lastdays = date("c",strtotime("-24 weeks"));
+
+	if ($time_interval == 'year') 		$lastdays = date("c", strtotime("-1 year"));
+	if ($time_interval == '6months')	$lastdays = date("c", strtotime("-24 weeks"));
+	if ($time_interval == 'month')		$lastdays = date("c", strtotime("-4 weeks"));
+	if ($time_interval == '2years')		$lastdays = date("c", strtotime("-2 year"));
+	if ($time_interval == '3months')	$lastdays = date("c", strtotime("-12 weeks"));
+
+	$con = db_connect();
+	
+	$sql = mysql_query("SELECT time_added, indexvalue FROM indexvalue WHERE time_added > '$lastdays' ORDER BY time_added ASC");
+	while($row = mysql_fetch_array($sql)) {
+		$day = date("d.m.Y", strtotime($row['time_added']));
+		$days[$day] = $row['indexvalue'];
+	}
+
+	db_disconnect($con);
+
+	foreach($days as $day => $count) echo "['$day', $count ], ";
+}
+
+//created
+function graph_value_fill($idx) {
+    if (!isset($idx)) {
+        error_log('Exiting from GRAPH_VALUE_FILL: No idx provided');
+    }
+
+    $iter_in = 0;
+    $iter_out = 0;
+
+    $days = array();
+
+    $con = db_connect();
+
+        $sql=mysql_query("SELECT date, cost FROM costs WHERE goods='$idx' ORDER BY date ASC");
+
+        while($row=mysql_fetch_array($sql)) {
+            $key = date("d.m.Y", strtotime($row['date']));
+            $days[$key] = $row['cost'];
+        }
+
+    db_disconnect($con);
+
+    foreach($days as $day => $value) echo "['$day', $value ], ";
+}
+
+
+/*
+	ФУНКЦИИ ДЛЯ РАБОТЫ С ИНДЕКСОМ ЦЕН
+*/
+
+//refactored
+function get_index_newest() {
+	$con = db_connect();
+	
+	$sql = mysql_query("SELECT indexvalue FROM indexvalue ORDER BY time_added DESC LIMIT 0,1");
+	$value = mysql_fetch_array($sql);
+
+	db_disconnect($con);
+
+	echo $value['indexvalue'];
+	error_log ("Exiting from DO_NEWESTVALUE"); 	
+}
+
+//refactored
+function get_index_change() {
+	$con = db_connect();
+		
+	$sql = mysql_query("SELECT indexvalue FROM indexvalue ORDER BY time_added DESC LIMIT 0,2");
+	
+	$result = mysql_fetch_array($sql);
+	$newest_value = $result['indexvalue'];
+	
+	$result = mysql_fetch_array($sql);
+	$prev_value = $result['indexvalue'];
+
+	db_disconnect($con);
+
+	$diff = round($newest_value - $prev_value, 4);
+	if ($prev_value == 0) $prev_value = 1;
+
+	$diff_percents = round(($newest_value - $prev_value)/$prev_value * 100, 2);
+	
+	if ($diff > 0) echo '<sup style="color: #f00" title="Последнее изменение">+' . $diff.' (+' . $diff_percents . '%)</sup>';
+		else echo '<sup style="color: #0d0" title="Последнее изменение">' . $diff . ' (' . $diff_percents . '%)</sup>';	
+}
+
+
+//refactored
+
+function runtime($time_start = 0, $is_get_runtime = false) {
+    global $_runtime;
+	
+	$time_current = microtime(true);
     
     /* Надо вернуть разницу? */
-    if( $mark!==NULL ) if( isset($_runtime_microsec[$type]) && isset($_runtime_microsec[$mark]) ) return sprintf("%f", $_runtime_microsec[$mark]-$_runtime_microsec[$type]);
 
-    if( PHP_VERSION >= '5.0.0' )
-    {
-        $mtime = microtime(true);
-    }
-    else
-    {
-        $mtime = microtime();
-        $mtime = explode(" ", $mtime);
-        $mtime = $mtime[1] + $mtime[0];
-    }
+	if ($is_get_runtime && isset($_runtime[$time_start])) {
+		echo sprintf("%f", $time_current - $_runtime[$time_start]) . ' секунды';
+		
+		return;
+	}
 
     /* Засекаем время */
-    if( !is_array($_runtime_microsec) ) $_runtime_microsec = array();
-    if( !isset($_runtime_microsec[$type]) )
-    {
-        $_runtime_microsec[$type] = $mtime;
+
+	if (!is_array($_runtime)) {
+		$_runtime = array();
+	}
+
+    if (!isset($_runtime[$time_start])) {
+        $_runtime[$time_start] = $time_current;
     }
-
-    /* Вычисляем время */
-    $mtime -= $_runtime_microsec[$type];
-
-    /* Форматируем вывод */
-    $mtime = sprintf("%f", $mtime);
-    return $mtime;
 }
 
 function do_graph() {
@@ -139,66 +313,71 @@ function do_graph() {
 	echo sizeof($days);
 }
 
-function get_numgoods($group = '') {
-	$con=db_connect();
+//refactored
+function get_goods_num($group = '') {
+	$con = db_connect();
 	
 	if (!empty($group)) 
-		$sql=mysql_query("SELECT COUNT(*) FROM goods WHERE grp='$group'");
+		$sql = mysql_query("SELECT COUNT(*) FROM goods WHERE grp = '$group'");
 	else
-		$sql=mysql_query("SELECT COUNT(*) FROM goods");
+		$sql = mysql_query("SELECT COUNT(*) FROM goods");
 	
-	$row=mysql_fetch_array($sql);
-	$count = $row['COUNT(*)'];
-	
-	return $count;
+	$row = mysql_fetch_array($sql);
+	return $row['COUNT(*)'];
 	
 	db_disconnect($con);
 }
 
-function get_tablegoods($group, $filter='', $sortby='name', $sortdir='ASC') {
-		
-	if (empty($sortby)) $sortby='name';
-	if (empty($sortdir)) $sortdir='ASC';
+function get_goods_table($group, $filter , $sortby, $sortdir) {
+
+    if (!isset($sortby)) $sortby = 'name';
+    if (!isset($sortdir)) $sortdir = 'ASC';
+
+    if ($sortdir === 'ASC') $new_sortdir = 'DESC'; else $new_sortdir = 'ASC';
+
+	if (($sortdir == 'ASC')  && ($sortby == 'name'))  $imgstr_name  = '<img src="addgraph/down_arrow.png" alt="">';
+	if (($sortdir == 'DESC') && ($sortby == 'name'))  $imgstr_name  = '<img src="addgraph/up_arrow.png" alt="">';
+	if (($sortdir == 'ASC')  && ($sortby == 'value')) $imgstr_value = '<img src="addgraph/up_arrow.png" alt="">';
+	if (($sortdir == 'DESC') && ($sortby == 'value')) $imgstr_value = '<img src="addgraph/down_arrow.png" alt="">';
 	
-	if ($sortdir=='ASC') $new_sortdir='DESC'; else $new_sortdir='ASC';
+	$th_name_link  = 'goods.php?filter=' . $filter . '&group=' . $group . '&sortby=name&sortdir=' . $new_sortdir;
+	$th_price_link = 'goods.php?filter=' . $filter . '&group=' . $group . '&sortby=value&sortdir=' . $new_sortdir;
 	
-	if (($sortdir=='ASC') and ($sortby=='name')) $imgstr_name='<img style="margin-left:2px" src="http://costindex.ru/addgraph/down_arrow.png">';
-	if (($sortdir=='DESC') and ($sortby=='name')) $imgstr_name='<img style="margin-left:2px" src="http://costindex.ru/addgraph/up_arrow.png">';
-	if (($sortdir=='ASC') and ($sortby=='value')) $imgstr_value='<img style="margin-left:2px" src="http://costindex.ru/addgraph/up_arrow.png">';
-	if (($sortdir=='DESC') and ($sortby=='value')) $imgstr_value='<img style="margin-left:2px" src="http://costindex.ru/addgraph/down_arrow.png">';
-	
-	$th_name_link = 'goods.php?filter='.$filter.'&group='.$group.'&sortby=name'.'&sortdir='.$new_sortdir;
-	$th_price_link = 'goods.php?filter='.$filter.'&group='.$group.'&sortby=value'.'&sortdir='.$new_sortdir;
-	
-	$con=db_connect();
+	$con = db_connect();
 		
 		$i = 1;
-		echo '<table class="goods">';
-		echo '<tr style="background: #eee">';
-		echo '<th width="50">п/п</th>';
-		echo '<th width="510"><a href="'.$th_name_link.'" title="Сортировать по наименованию товара">Наименование товара'.$imgstr_name.'</a></th>';
-		echo '<th width="80"><a href="'.$th_price_link.'" title="Cортировать по цене">Цена, р.'.$imgstr_value.'</a></th>';
-		echo '<th width="80">Изменение</th>';
-		echo '<th width="80">C даты</th>';
-		echo '</tr>';
+		echo '<table class="goods">
+				<tr style="background: #eee">
+					<th width="50">п/п</th>
+					<th width="510"><a href="' . $th_name_link . '" title="Сортировать по наименованию товара">Наименование товара' . $imgstr_name . '</a></th>
+					<th width="80"><a href="' . $th_price_link . '" title="Cортировать по цене">Цена, р.' . $imgstr_value . '</a></th>
+					<th width="80">Изменение</th>
+					<th width="80">C даты</th>
+				</tr>
+			';
+
+		if (!empty($group))
+			$sql = mysql_query("SELECT idx, name, value, thumb, units FROM goods WHERE name LIKE '$filter%' AND grp = '$group' ORDER BY '$sortby' '$sortdir'");
+		else
+			$sql = mysql_query("SELECT idx, name, value, thumb, units FROM goods WHERE name LIKE '$filter%' ORDER BY '$sortby' '$sortdir'");
 		
-		if (!empty($group)) $mysql_query_str="SELECT idx, name, value, thumb, units FROM goods WHERE name LIKE '$filter%' AND grp='$group' ORDER BY ".$sortby." ".$sortdir; else
-		$mysql_query_str="SELECT idx, name, value, thumb, units FROM goods WHERE name LIKE '$filter%' ORDER BY ".$sortby." ".$sortdir;
-		
-		$sql=mysql_query($mysql_query_str);
-		while($row=mysql_fetch_array($sql)) {
+
+		$i = 1;
+
+        while ($row = mysql_fetch_array($sql)) {
 		
 			$unit = $row['units'];
 			$good = $row['idx'];
 		
-			$sql_unit=mysql_query("SELECT value FROM units WHERE idx='$unit'");
-			$row_unit=mysql_fetch_array($sql_unit);
-			$unit_name=$row_unit['value'];
+			$sql_unit = mysql_query("SELECT value FROM units WHERE idx = '$unit'");
+			$row_unit = mysql_fetch_array($sql_unit);
+			$unit_name = $row_unit['value'];
 			
 			$sql_cost = mysql_query("SELECT cost, date FROM costs WHERE goods='$good' ORDER BY date DESC");
 			$row_cost = mysql_fetch_array($sql_cost);
 			$now_cost = $row_cost['cost'];
-			$row_cost=mysql_fetch_array($sql_cost);
+			
+			$row_cost = mysql_fetch_array($sql_cost);
 			$prev_cost = $row_cost['cost'];
 			$last_date = $row_cost['date'];
 			
@@ -206,30 +385,35 @@ function get_tablegoods($group, $filter='', $sortby='name', $sortdir='ASC') {
 				$prev_cost = 1;
 			}
 
-			$diffcost = round(($now_cost-$prev_cost)/$prev_cost*100,2);
-			if (!($diffcost==0)) $lastdatestr=date ('d.m.Y', strtotime($last_date)); else $lastdatestr="";
+			$diffcost = round(($now_cost - $prev_cost)/$prev_cost * 100, 2);
+			if (!($diffcost == 0)) $lastdatestr = date ('d.m.Y', strtotime($last_date)); else $lastdatestr = "";
 			
-			if ($diffcost>0) $diffstr = '<span style="color: #f00;  font-size:12px;" title="Последнее изменение">+'.$diffcost.'%</span>';
-				else if ($diffcost<0) $diffstr =  '<span style="color: #0d0;  font-size:12px;" title="Последнее изменение">'.$diffcost.'%</span>';
-				else $diffstr = '';
+			if ($diffcost > 0) 
+				$diffstr = '<span style="color: #f00;  font-size:12px;" title="Последнее изменение">+' . $diffcost . '%</span>';
+			else if ($diffcost < 0)
+				$diffstr =  '<span style="color: #0d0;  font-size:12px;" title="Последнее изменение">' . $diffcost . '%</span>';
+			else $diffstr = '';
 				
-			
-			$tr_str='<tr';
-			if ($i%2==0) $tr_str=$tr_str.' style="background: #eee"';
-			$tr_str=$tr_str.'>';
-			echo $tr_str;
-			echo '<td align="center">'.$i.'</td>';
-			echo '<td><a href="http://costindex.ru/good.php?idx='.$row['idx'].'">'.$row['name'].', '.$unit_name.'</a></td>';
-			echo '<td align="right">'.$row['value'].'</td>';
-			echo '<td align="center">'.$diffstr.'</td>';
-			echo '<td align="center">'.$lastdatestr.'</td>';
-			echo '</tr>';
-			$i=$i+1;
+			$style = ($i % 2 === 0) ? 'style="background: #eee;"' : 'style="background: #fff"';
+
+            echo '<tr '. $style . '>' .
+				   '<td align="center">' . $i . '</td>
+					<td>
+					 	<a href="good.php?idx=' . $row['idx'] . '">'. $row['name'] .', ' . $unit_name.'</a>
+					</td>
+					<td align="center">' . $row['value'] . '</td>
+					<td align="center">' . $diffstr . '</tdn=>
+					<td align="center">' . $lastdatestr . '</td>
+				 </tr>';
+
+            $i += 1;
 		}
 
-		echo '</table>';		
-	error_log ("Exiting from GET_TABLEGOODS"); 
-	db_disconnect($con);
+    echo '</table>';
+
+    db_disconnect($con);
+
+	error_log ("Exiting from GET_GOODS_TABLE");
 }
 
 function get_tablepricechange($idx) {
@@ -310,26 +494,6 @@ function get_tablecosts($login) {
 	db_disconnect($con);
 }
 
-function get_goods() {
-	$con=db_connect();
-	
-		$sql=mysql_query("SELECT idx, name, units FROM goods ORDER BY name ASC");
-		while($row=mysql_fetch_array($sql)) {
-			$unit = $row['units'];
-			$sql_unit=mysql_query("SELECT value FROM units WHERE idx='$unit'");
-			$row_unit=mysql_fetch_array($sql_unit);
-			$unit_name=$row_unit['value'];
-			
-			$key = $row['idx'];
-			$goods[$key] = $row['name'].', '.$unit_name;
-		}
-		
-	error_log ("Exiting from GET_GOODS"); 		
-	db_disconnect($con);
-	
-	return $goods;
-}
-
 function get_units() {
 	$con=db_connect();
 	
@@ -362,51 +526,91 @@ function get_groups() {
 	return $groups;
 }
 
-function get_good($idx, $units=true) {
+function get_goods() {
 	$con=db_connect();
 	
-		$sql=mysql_query("SELECT name, units FROM goods WHERE idx='$idx'");
-		$row=mysql_fetch_array($sql);
-		$name = $row['name'];
-		$unit = $row['units'];
-	
-		if ($units) {
+		$sql=mysql_query("SELECT idx, name, units FROM goods ORDER BY name ASC");
+		while($row=mysql_fetch_array($sql)) {
+			$unit = $row['units'];
 			$sql_unit=mysql_query("SELECT value FROM units WHERE idx='$unit'");
 			$row_unit=mysql_fetch_array($sql_unit);
-			$unit_name=', '.$row_unit['value'];
-		} else $unit_name='';
-				
-	error_log ("Exiting from GET_GOOD"); 		
+			$unit_name=$row_unit['value'];
+			
+			$key = $row['idx'];
+			$goods[$key] = $row['name'].', '.$unit_name;
+		}
+		
+	error_log ("Exiting from GET_GOODS"); 		
 	db_disconnect($con);
 	
-	$result = $name.$unit_name;
+	return $goods;
+}
+
+//refactored
+function get_good($idx, $show_units = true) {
+	if (!isset($idx)) return;
+
+    $con = db_connect();
 	
+		$sql = mysql_query("SELECT name, units FROM goods WHERE idx='$idx'");
+		$row = mysql_fetch_array($sql);
+		$name = $row['name'];
+		$units = $row['units'];
+
+
+
+        $unit_name = '';
+
+		if ($show_units) {
+			$sql_unit = mysql_query("SELECT value FROM units WHERE idx='$units'");
+			$row_unit = mysql_fetch_array($sql_unit);
+			$unit_name = ', ' . $row_unit['value'];
+		}
+
+        $result = $name . $unit_name;
+	
+	db_disconnect($con);
+	
+	error_log ("Exiting from GET_GOOD");
 	return $result;
 }
 
+//refactored
 function get_thumb($idx) {
-	$con=db_connect();
+    if (!isset($idx)) {
+        error_log ("Exiting from GET_THUMB: no idx provided");
+
+    }
+
+	$con = db_connect();
 	
-		$sql=mysql_query("SELECT thumb FROM goods WHERE idx='$idx'");
-		$row=mysql_fetch_array($sql);
-		if (empty($row['thumb'])) return 'nophoto.jpg'; else $thumb = $row['thumb'];
-				
-	error_log ("Exiting from GET_THUMB"); 		
+		$sql = mysql_query("SELECT thumb FROM goods WHERE idx = '$idx'");
+		$row = mysql_fetch_array($sql);
+
 	db_disconnect($con);
-	
+
+    if (empty($row['thumb'])) $thumb = 'nophoto.jpg'; else $thumb = $row['thumb'];
+
+    error_log ("Exiting from GET_THUMB");
 	return $thumb;
 }
 
+//refactored
 function get_price($idx) {
-	$con=db_connect();
+    if (!isset($idx)) {
+        error_log('Exiting from GET_PRICE: no idx provided');
+        return 'Цена не определена';
+    }
+
+	$con = db_connect();
 	
-		$sql=mysql_query("SELECT value FROM goods WHERE idx='$idx'");
-		$row=mysql_fetch_array($sql);
-		if (empty($row['value'])) $price='Цена не определена'; else $price = $row['value'];
+		$sql = mysql_query("SELECT value FROM goods WHERE idx = '$idx'");
+		$row = mysql_fetch_array($sql);
+		if (empty($row['value'])) $price = 'Цена не определена'; else $price = $row['value'];
 				
-	error_log ("Exiting from GET_PRICE"); 		
 	db_disconnect($con);
-	
+
+    error_log ("Exiting from GET_PRICE");
 	return $price;
 }
 
@@ -479,60 +683,81 @@ function get_params($idx) {
 	db_disconnect($con);
 }
 
+
+//refactored
 function get_group_name($idx) {
-	if (isset ($idx)) {
-		$con=db_connect();
-	
-			$sql=mysql_query("SELECT name FROM groups WHERE idx='$idx'");
-			while($row=mysql_fetch_array($sql)) {
-				$name = $row['name'];				
-			}
-		db_disconnect($con);
-		
-		if (!empty($name)) {
-			error_log ("Exiting from GET_GROUP_NAME success"); 		
-			return $name;	
-		} else {
-			error_log ("Exiting from GET_GROUP_NAME no group name found"); 		
-			return 'Все товары';
-		}
+	if (!isset($idx)) {
+		error_log ("Exiting from GET_GROUP_NAME: no group idx specified");
+		return 'Все товары';
 	}
-	error_log ("Exiting from GET_GROUP_NAME failed");
-	return 'Все товары';
-}
 
-function get_group($idx) {
-	if (isset ($idx)) {
-		$con=db_connect();
-			$sql=mysql_query("SELECT grp FROM goods WHERE idx='$idx'");
-			while($row=mysql_fetch_array($sql)) {
-				$group = $row['grp'];
-			}
-		db_disconnect($con);
+	$con = db_connect();
+
+		$sql = mysql_query("SELECT name FROM groups WHERE idx = '$idx'");
 		
-		if (!empty($group)) {
-			error_log ("Exiting from GET_GROUP success"); 		
-			return $group;	
-		} else {
-			error_log ("Exiting from GET_GROUP no group found"); 		
-			return 0;			
+		while ($row = mysql_fetch_array($sql)) {
+			$name = $row['name'];
 		}
-	}
-	error_log ("Exiting from GET_GROUP no required param"); 		
-	return 0;	
-}
 
-function get_group_index() {
-	$con=db_connect();
-		echo '<div class="group_index"><ul>';
-		$sql=mysql_query("SELECT idx, name FROM groups ORDER BY name ASC");
-			while($row=mysql_fetch_array($sql)) {
-				$idx = $row['idx'];
-				$name = $row['name'];
-				echo '<li><a href="http://costindex.ru/goods.php?group='.$idx.'">'.$name.' ('.get_numgoods($idx).')</a></li>';
-			}
-		echo '</ul></div>';
 	db_disconnect($con);
+	
+	if (!empty($name)) {
+		error_log("Exiting from GET_GROUP_NAME success"); 		
+		return $name;	
+	} else {
+		error_log("Exiting from GET_GROUP_NAME no group name found"); 		
+		return 'Все товары';
+	}	
+}
+
+//refactored
+function get_group($idx) {
+    if (!isset($idx)) {
+        error_log ("Exiting from GET_GROUP: no idx provided");
+        return 0;
+    }
+
+    $con = db_connect();
+
+        $sql = mysql_query("SELECT grp FROM goods WHERE idx='$idx'");
+
+        while($row = mysql_fetch_array($sql)) {
+            $group = $row['grp'];
+        }
+
+    db_disconnect($con);
+		
+    if (!empty($group)) {
+        error_log ("Exiting from GET_GROUP success");
+        return $group;
+    } else {
+        error_log ("Exiting from GET_GROUP no group found");
+        return 0;
+    }
+}
+
+//refactored
+function get_group_contents() {
+	$con = db_connect();
+
+		echo '<div class="group_index">
+					<ul>
+			 ';
+
+		$sql = mysql_query("SELECT idx, name FROM groups ORDER BY name ASC");
+			while ($row = mysql_fetch_array($sql)) {
+				echo '
+						<li>
+							<a href="goods.php?group='. $row['idx'] .'">'. $row['name'] .' ('.get_goods_num($row['idx']).')</a>
+						</li>';
+			}
+
+		echo '		</ul>
+				</div>
+			 ';
+
+	db_disconnect($con);
+
 	error_log ("Exiting from GET_GROUP_INDEX no required param"); 
 }
 
@@ -553,9 +778,9 @@ function get_group_index_img() {
 				$good = $row_img['name'];
 				
 				echo '<div class="related_item">';
-				echo '<a href="http://costindex.ru/goods.php?group='.$idx.'">';
-				echo '<img src="/thumbs/'.$img.'" alt="'.$name.'" title="'.$name.'" width="165", height="165">';
-				echo '<h3>'.$name.' ('.get_numgoods($idx).')</h3>';
+				echo '<a href="goods.php?group='.$idx.'">';
+				echo '<img src="thumbs/'.$img.'" alt="'.$name.'" title="'.$name.'" width="165", height="165">';
+				echo '<h3>'.$name.' ('.get_goods_num($idx).')</h3>';
 				echo '</a>';
 				echo '</div>';
 				$i=$i+1;
@@ -625,49 +850,23 @@ function add_indexvalue() {
 	db_disconnect($con);
 }
 
+//refactored
 function add_goods($groups, $goods, $cost, $units) {
-  if (isset($groups) and isset($goods) and isset($cost) and isset($units)) {
-	$user_login=$_SESSION['login'];
-	$con=db_connect();
-		$cost=str_replace(",",".",$cost);
-		$sql=mysql_query("INSERT INTO goods (name, grp, value, units, lastedit) VALUES ('$goods', '$groups', '$cost', '$units', '$user_login')");	
-		
-	error_log ("Exiting from ADD_GOODS"); 		
-	db_disconnect($con); 
+  if (!isset($groups) || !isset($goods) || !isset($cost) || !isset($units))  {
+      error_log ("Exiting from ADD_GOODS: some params missed");
+      return;
   }
-}
 
-function login($login, $pass) {
-	$login = stripslashes($login);
-    $login = htmlspecialchars($login);
-	$login = trim($login);
-	$pass = stripslashes($pass);
-    $pass = htmlspecialchars($pass);
-    $pass = trim($pass);
-	
-	if ($login == 'logout') {
-		unset ($_SESSION['login']);
-		unset ($_SESSION['id']);
-		unset ($_SESSION['role']);
-		
-		exit;
-	}
-	
-	$con = db_connect();
-			
-		$sql = mysql_query("SELECT * FROM users WHERE login='$login'");
-		$row = mysql_fetch_array($sql);
-		
-		if (!(empty($row['pass'])) && $row['confirmed']) {
-			if ($row['pass'] == md5($pass)) {
-				$_SESSION['login']=$row['login']; 
-				$_SESSION['id']=$row['idx'];
-				$_SESSION['role']=$row['role'];
-			};
-		};
+  $user_login = $_SESSION['login'];
+  $cost=str_replace(",",".", $cost);
 
-	error_log ("Exiting from LOGIN");
-	db_disconnect($con);	
+  $con = db_connect();
+
+        $sql=mysql_query("INSERT INTO goods (name, grp, value, units, lastedit) VALUES ('$goods', '$groups', '$cost', '$units', '$user_login')");
+
+  db_disconnect($con);
+
+  error_log ("Exiting from ADD_GOODS");
 }
 
 function get_related($idx) {
@@ -686,7 +885,7 @@ function get_related($idx) {
 						$i=$i+1;
 						$related_name=get_good($row['idx'], false);
 						echo '<div class="related_item">';
-						echo '<a href="http://costindex.ru/good.php?idx='.$row['idx'].'">';
+						echo '<a href="good.php?idx='.$row['idx'].'">';
 						echo '<img src="/thumbs/'.get_thumb($row['idx']).'" alt="'.$related_name.'" title="'.$related_name.'" width="165", height="165">';
 						echo $related_name;
 						echo '<div class="related_price">'.get_price($row['idx']).' р.</div>';
@@ -703,39 +902,52 @@ function get_related($idx) {
 	db_disconnect($con);  
   }
 }
+
+//refactored
 function get_popular($group) {
 	$goods_freqs = array();
 	
-		$con=db_connect();
-			if (!(empty($group))) {
-				$sql=mysql_query("SELECT idx FROM goods WHERE grp='$group'");
-			} else	$sql=mysql_query("SELECT idx FROM goods");
-			while($row=mysql_fetch_array($sql)) {
-				$idx=$row['idx'];
-				$sql2=mysql_query("SELECT COUNT(goods) FROM costs WHERE goods='$idx'");
-				$row2=mysql_fetch_array($sql2);
-				$goods_freqs[$idx]=$row2['COUNT(goods)'];
-			}				
-		db_disconnect($con);  
+	$con = db_connect();
 		
-		arsort($goods_freqs);
-		
-		$i=0;
-		foreach ($goods_freqs as $idx => $count) {
-			if ($i==0) echo '<div class="popular"><h3>Популярные товары</h3>';
-			$i=$i+1;
-			$related_name=get_good($idx, false);
-			echo '<div class="related_item">';
-			echo '<a href="http://costindex.ru/good.php?idx='.$idx.'">';
-			echo '<img src="/thumbs/'.get_thumb($idx).'" alt="'.$related_name.'" title="'.$related_name.'" width="165", height="165">';
-			echo '<div class="related_name">'.$related_name.'</div>';
-			echo '<div class="related_price">'.get_price($idx).' р.</div>';
-			echo '</a>';
-			echo '</div>';
-			if ($i>=4) break;
+		if (isset($group)) 
+			$sql = mysql_query("SELECT idx FROM goods WHERE grp='$group'");
+		else
+			$sql = mysql_query("SELECT idx FROM goods");
+			
+		while ($row = mysql_fetch_array($sql)) {
+			$idx = $row['idx'];
+			$sql2 = mysql_query("SELECT COUNT(goods) FROM costs WHERE goods='$idx'");
+			$row2 = mysql_fetch_array($sql2);
+			$goods_freqs[$idx] = $row2['COUNT(goods)'];
 		}
 
-		echo '</div><div class="clear"></div>';
+	db_disconnect($con);
+	
+	arsort($goods_freqs);
+	
+	echo '
+		<div class="popular">
+			<h3>Популярные товары</h3>
+	';
+
+	foreach (array_slice($goods_freqs, 0, 4, true) as $idx => $count) {
+		$related_name = get_good($idx, false);
+		echo '
+			<div class="related_item">
+				<a href="good.php?idx='.$idx.'">
+					<img src="thumbs/'.get_thumb($idx).'" alt="'.$related_name.'" title="'.$related_name.'" width="165" height="165">
+					<div class="related_name">'.$related_name.'</div>
+					<div class="related_price">'.get_price($idx).' р.</div>
+				</a>
+			</div>
+		';
+	}
+
+	echo '
+			</div>
+			<div class="clear">
+		</div>
+	';
 
 	error_log ("Exiting from GET_POPULAR");
 }
@@ -744,33 +956,55 @@ function conv_kcal_to_kj ($kcal) {
   if (is_numeric($kcal)) return round($kcal*4.1868,0); else return false;
 }
 
+//refactored
 function get_price_max($idx) {
-	if (isset($idx)) {
-		$maximum = 0;
-		$con=db_connect();
-			$sql=mysql_query("SELECT cost FROM costs WHERE goods='$idx'");
-			while($row=mysql_fetch_array($sql)) {
-				if ($row['cost']>$maximum) $maximum = $row['cost'];
-			}	
-		db_disconnect($con);
-		return $maximum;
-	};
-	return 0;
+	if (!isset($idx)) {
+        error_log("Exiting from GET_PRICE_MAX: no idx provided");
+        return 'Не найдёна';
+    }
+
+    $maximum = 0;
+
+    $con = db_connect();
+        $sql = mysql_query("SELECT cost FROM costs WHERE goods='$idx'");
+
+        while($row = mysql_fetch_array($sql)) {
+            if ($row['cost'] > $maximum) $maximum = $row['cost'];
+        }
+
+    db_disconnect($con);
+
+    error_log("Exiting from GET_PRICE_MAX");
+    return $maximum;
 }
 
+//refactored
 function get_price_min($idx) {
-	if (isset($idx)) {
-		$first=true;
-		$con=db_connect();
-			$sql=mysql_query("SELECT cost FROM costs WHERE goods='$idx'");
-			while($row=mysql_fetch_array($sql)) {
-				if ($first) {$first=false; $minimum = $row['cost'];}
-				if ($row['cost']<$minimum) $minimum = $row['cost'];
-			}			
-		db_disconnect($con);
-		return $minimum;
-	};
-	return 0;
+	if (!isset($idx)) {
+        error_log("Exiting from GET_PRICE_MIN: no idx provided");
+        return 'Не найдёна';
+    }
+
+    $first = true;
+    $minimum = 0;
+
+    $con = db_connect();
+        $sql = mysql_query("SELECT cost FROM costs WHERE goods = '$idx'");
+
+        while($row = mysql_fetch_array($sql)) {
+            if ($first) {
+                $first = false;
+                $minimum = $row['cost'];
+            } else {
+                if ($row['cost'] < $minimum) $minimum = $row['cost'];
+            }
+
+        }
+    db_disconnect($con);
+
+    error_log("Exiting from GET_PRICE_MIN");
+    return $minimum;
+
 }
 
 function is_logged ($session) {
@@ -877,9 +1111,20 @@ function confirm_user($login, $number) {
 	error_log ("Exiting from CONFIRM_USER"); 
 }
 
-function get_edit_link () {
-	if (!empty($_SESSION['login']) and !empty($_SESSION['id']) and (($_SESSION['role']=='editor') or ($_SESSION['role']=='admin')))
-		echo '<span class="edit_link"><a href="#" titile="Редактировать сведения о товаре">Редактировать</a></span>';
+//refactored
+function get_edit_link ($session) {
+    if (!isset($session)) {
+        error_log('Exiting from GET_EDIT_LINK: no session provided');
+    }
+
+	if (!empty($session['login']) && !empty($session['id']) && (($session['role']=='editor') || ($session['role']=='admin')))
+		echo '
+            <span class="edit_link">
+                <a href="#" title="Редактировать сведения о товаре">
+                    Редактировать
+                </a>
+            </span>
+        ';
 }
 
 function rus_to_lat ($rus_str) {

@@ -1,29 +1,19 @@
 <?php
-	$host="localhost";
-	$user="u0650462_costuse";
-	$password="dG4rV8xG6xxI7jR3";
-	$db = "u0650462_costindex";
-	
-	$connected = mysql_connect($host, $user, $password);
-	if (!$connected) die ("MySQL сервер недоступен!".mysql_error());
-	
-	mysql_select_db($db) or die("Нет соединения с БД".mysql_error());
-	mysql_query("SET NAMES 'utf8'"); 
-	mysql_query("SET CHARACTER SET 'utf8'");
-	mysql_query("SET SESSION collation_connection = 'utf8_general_ci'");
+    require 'functions.php';
+
+    $con = db_connect();
 
 		$summa = 0;
 	
-		$sql=mysql_query("SELECT COUNT(*), SUM(value) FROM goods");
-		$row=mysql_fetch_array($sql);
+		$sql = mysql_query("SELECT COUNT(*), SUM(value) FROM goods");
+		$row = mysql_fetch_array($sql);
 		
 		$summa = $row['SUM(value)'];
 		$count = $row['COUNT(*)'];
-		if ($count==0) $count=1;
-		
-		$indexvalue = $summa/$count;
-		$sql=mysql_query("INSERT INTO indexvalue (indexvalue) VALUES ('$indexvalue')");
-	
-	
-	mysql_close($connected);	
-?>
+
+    db_disconnect($con);
+
+    if ($count == 0) $count = 1;
+	$indexvalue = $summa/$count;
+
+	db_insertindex($indexvalue);
