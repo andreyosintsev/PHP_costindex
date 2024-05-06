@@ -1,18 +1,13 @@
 <?php 
 	session_start();
-	require 'functions.php';
+    require 'functions.php';
 	runtime();
-
-	$login = $_POST['login'];
-	$pass = $_POST['pass'];
-
-	login($login, $pass);
 ?>
 
-	<?php require 'template/header.php'; ?>
+	<?php require DIR_TEMPLATE . 'header.php'; ?>
 
 	<script src="https://www.google.com/jsapi"></script>
-	<script src="scripts/chart.js"></script>
+    <script src="<?php echo DIR_SCRIPTS . 'chart.js'; ?>"></script>
 	<script>
 		google.load('visualization', '1.0', {'packages':['corechart']});
 		google.setOnLoadCallback(() => drawChart(
@@ -25,25 +20,25 @@
 	</script>
 	<body>
 
-	<?php include('template/ads-top.php'); ?>
+	<?php include(DIR_TEMPLATE . 'ads-top.php'); ?>
 		
-	<?php if (!empty($_SESSION['login']) and !empty($_SESSION['id'])) 
-		require ('template/logged.php'); else require ('template/login.php');
+	<?php if (!(empty($_SESSION['login']) || empty($_SESSION['id'])))
+		require (DIR_TEMPLATE . 'logout.php'); else require (DIR_TEMPLATE . 'login.php');
 	?>
 		
 	<div class="wrapper">
 		<header>
-			<h1>Индекс цен на <?php get_date_newest('d.m.Y');?></h1>
-			<p><?php get_index_newest();?></p>
-			<p><?php get_index_change();?></p>
-			<time datetime="<?php get_date_newest('Y-m-d');?>"></time>
+			<h1>Индекс цен на <?php date_get_newest('d.m.Y');?></h1>
+			<p><?php index_get_newest();?></p>
+			<p><?php index_get_change();?></p>
+			<time datetime="<?php date_get_newest('Y-m-d');?>"></time>
 		</header>
 
 		<article>
 			<header>
 
 				<?php
-					$time_interval = convert_date_interval_to_string($_GET['lastdays']);
+					$time_interval = date_convert_interval_to_string($_GET['lastdays']);
 
 					function get_style($time_interval, $interval) {
 						if ($time_interval == $interval) echo 'style="font-weight: bold"';
@@ -88,6 +83,6 @@
 			</section>
 		</article>
 		
-		<?php include 'template/comments.php';?>
+		<?php include DIR_TEMPLATE . 'comments.php';?>
 
-<?php require 'template/footer.php'; ?>
+<?php require DIR_TEMPLATE . 'footer.php'; ?>

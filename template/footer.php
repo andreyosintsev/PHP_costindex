@@ -5,15 +5,16 @@
                     <a href="/" title="На главную страницу">Главная</a>
                 </li>
                 <li>
-                    <a href="goods.php" title="К перечню товаров">Товары</a>
+                    <a href="<?php echo DIR_PAGES . 'goods.php'; ?>" title="К перечню товаров">Товары</a>
                 </li>
 
-                <?php if (!empty($_SESSION['login']) && !empty($_SESSION['id']) && ($_SESSION['role']=='admin')) {
-                    echo '
+                <?php if (!empty($_SESSION['login']) && !empty($_SESSION['id']) && ($_SESSION['role']=='admin'))
+                    {
+                ?>
                         <li>
-                            <a href="addvalue.php" title="Добавить новый чек">Добавить чек</a>
+                            <a href="<?php echo DIR_PAGES . 'receipt-add.php'; ?>" title="Добавить новый чек">Добавить чек</a>
                         </li>
-                    ';
+                <?php
                     }
                 ?>
             </ul>

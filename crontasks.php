@@ -16,4 +16,4 @@
     if ($count == 0) $count = 1;
 	$indexvalue = $summa/$count;
 
-	db_insertindex($indexvalue);
+	index_add($indexvalue);

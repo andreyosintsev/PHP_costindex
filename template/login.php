@@ -1,10 +1,10 @@
 <!--login.php-->
 <div class="login">
 	<div class="logo">
-		<a href="http://costindex.ru/">COSTINDEX</a>
+		<a href="/">COSTINDEX</a>
 	</div>
-	<a href="../register.php" class="register">Регистрация</a>
-	<form id="form_login" method="post" action="../index.php">
+	<a href="<?php echo DIR_PAGES . 'register.php'; ?>" class="register">Регистрация</a>
+	<form id="form_login" method="post" action="../api/user-login.php">
 	<table id="login">
 		<tr>
 			<td>
